@@ -422,6 +422,7 @@ p {
   width: 100%;
   max-width: 1200px;
   color: #f0f0f0;
+  background-color: #f0f0f0;
   margin: -20px auto;
   padding-bottom: 0;
 }
@@ -528,6 +529,8 @@ p {
 }
 
 .logos-title-large {
+  color: #f0f0f0;
+  background-color: #f0f0f0;
   border-bottom: 1px solid #e4ebf3;
   padding: 60px 30px;
   position: relative;
@@ -536,7 +539,10 @@ p {
 .clients-title {
   text-align: center;
   font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
   line-height: 32px;
+  text-decoration: none;
 }
 
 .clients-wrapper {

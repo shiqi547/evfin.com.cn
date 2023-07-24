@@ -1,12 +1,3 @@
-
-/*!
- * Webflow: Front-end site library
- * @license MIT
- * Inline scripts may access the api using an async handler:
- *   var Webflow = Webflow || [];
- *   Webflow.push(readyFunction);
- */
-
 (() => {
   var __getOwnPropNames = Object.getOwnPropertyNames;
   var __commonJS = (cb, mod) => function __require() {
@@ -3518,7 +3509,9 @@
         STYLE_BACKGROUND_COLOR: "STYLE_BACKGROUND_COLOR",
         STYLE_BORDER: "STYLE_BORDER",
         STYLE_TEXT_COLOR: "STYLE_TEXT_COLOR",
+        OBJECT_VALUE: "OBJECT_VALUE",
         PLUGIN_LOTTIE: "PLUGIN_LOTTIE",
+        PLUGIN_SPLINE: "PLUGIN_SPLINE",
         GENERAL_DISPLAY: "GENERAL_DISPLAY",
         GENERAL_START_ACTION: "GENERAL_START_ACTION",
         GENERAL_CONTINUOUS_ACTION: "GENERAL_CONTINUOUS_ACTION",
@@ -4630,8 +4623,8 @@
     "node_modules/lodash/_Map.js"(exports, module) {
       var getNative = require_getNative();
       var root = require_root();
-      var Map = getNative(root, "Map");
-      module.exports = Map;
+      var Map2 = getNative(root, "Map");
+      module.exports = Map2;
     }
   });
 
@@ -4746,12 +4739,12 @@
     "node_modules/lodash/_mapCacheClear.js"(exports, module) {
       var Hash = require_Hash();
       var ListCache = require_ListCache();
-      var Map = require_Map();
+      var Map2 = require_Map();
       function mapCacheClear() {
         this.size = 0;
         this.__data__ = {
           "hash": new Hash(),
-          "map": new (Map || ListCache)(),
+          "map": new (Map2 || ListCache)(),
           "string": new Hash()
         };
       }
@@ -4860,14 +4853,14 @@
   var require_stackSet = __commonJS({
     "node_modules/lodash/_stackSet.js"(exports, module) {
       var ListCache = require_ListCache();
-      var Map = require_Map();
+      var Map2 = require_Map();
       var MapCache = require_MapCache();
       var LARGE_ARRAY_SIZE = 200;
       function stackSet(key, value) {
         var data = this.__data__;
         if (data instanceof ListCache) {
           var pairs = data.__data__;
-          if (!Map || pairs.length < LARGE_ARRAY_SIZE - 1) {
+          if (!Map2 || pairs.length < LARGE_ARRAY_SIZE - 1) {
             pairs.push([key, value]);
             this.size = ++data.size;
             return this;
@@ -5608,7 +5601,7 @@
   var require_getTag = __commonJS({
     "node_modules/lodash/_getTag.js"(exports, module) {
       var DataView = require_DataView();
-      var Map = require_Map();
+      var Map2 = require_Map();
       var Promise2 = require_Promise();
       var Set = require_Set();
       var WeakMap2 = require_WeakMap();
@@ -5621,12 +5614,12 @@
       var weakMapTag = "[object WeakMap]";
       var dataViewTag = "[object DataView]";
       var dataViewCtorString = toSource(DataView);
-      var mapCtorString = toSource(Map);
+      var mapCtorString = toSource(Map2);
       var promiseCtorString = toSource(Promise2);
       var setCtorString = toSource(Set);
       var weakMapCtorString = toSource(WeakMap2);
       var getTag = baseGetTag;
-      if (DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag || Map && getTag(new Map()) != mapTag || Promise2 && getTag(Promise2.resolve()) != promiseTag || Set && getTag(new Set()) != setTag || WeakMap2 && getTag(new WeakMap2()) != weakMapTag) {
+      if (DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag || Map2 && getTag(new Map2()) != mapTag || Promise2 && getTag(Promise2.resolve()) != promiseTag || Set && getTag(new Set()) != setTag || WeakMap2 && getTag(new WeakMap2()) != weakMapTag) {
         getTag = function(value) {
           var result = baseGetTag(value), Ctor = result == objectTag ? value.constructor : void 0, ctorString = Ctor ? toSource(Ctor) : "";
           if (ctorString) {
@@ -6918,9 +6911,9 @@
     }
   });
 
-  // packages/systems/ix2/lottie/IX2LottieUtils.js
-  var require_IX2LottieUtils = __commonJS({
-    "packages/systems/ix2/lottie/IX2LottieUtils.js"(exports) {
+  // packages/systems/ix2/plugins/IX2Lottie.js
+  var require_IX2Lottie = __commonJS({
+    "packages/systems/ix2/plugins/IX2Lottie.js"(exports) {
       "use strict";
       Object.defineProperty(exports, "__esModule", {
         value: true
@@ -6976,6 +6969,136 @@
     }
   });
 
+  // packages/systems/ix2/plugins/IX2Spline.js
+  var require_IX2Spline = __commonJS({
+    "packages/systems/ix2/plugins/IX2Spline.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", {
+        value: true
+      });
+      exports.renderPlugin = exports.getPluginOrigin = exports.getPluginDuration = exports.getPluginDestination = exports.getPluginConfig = exports.createPluginInstance = exports.clearPlugin = void 0;
+      var queryContainerElement = (elementId) => document.querySelector(`[data-w-id="${elementId}"]`);
+      var getFrontendModule = () => window.Webflow.require("spline");
+      var difference = (arr1, arr2) => arr1.filter((x) => !arr2.includes(x));
+      var getPluginConfig = (actionItemConfig, key) => {
+        return actionItemConfig.value[key];
+      };
+      exports.getPluginConfig = getPluginConfig;
+      var getPluginDuration = () => {
+        return null;
+      };
+      exports.getPluginDuration = getPluginDuration;
+      var DEFAULT_VALUES = Object.freeze({
+        positionX: 0,
+        positionY: 0,
+        positionZ: 0,
+        rotationX: 0,
+        rotationY: 0,
+        rotationZ: 0,
+        scaleX: 1,
+        scaleY: 1,
+        scaleZ: 1
+      });
+      var getPluginOrigin = (refState, actionItem) => {
+        const destination = actionItem.config.value;
+        const destinationKeys = Object.keys(destination);
+        if (refState) {
+          const stateKeys = Object.keys(refState);
+          const diffKeys = difference(destinationKeys, stateKeys);
+          if (diffKeys.length) {
+            const origin2 = diffKeys.reduce((result, key) => {
+              result[key] = DEFAULT_VALUES[key];
+              return result;
+            }, refState);
+            return origin2;
+          }
+          return refState;
+        }
+        const origin = destinationKeys.reduce((result, key) => {
+          result[key] = DEFAULT_VALUES[key];
+          return result;
+        }, {});
+        return origin;
+      };
+      exports.getPluginOrigin = getPluginOrigin;
+      var getPluginDestination = (actionItemConfig) => {
+        return actionItemConfig.value;
+      };
+      exports.getPluginDestination = getPluginDestination;
+      var createPluginInstance = (element, actionItem) => {
+        var _actionItem$config, _actionItem$config$ta;
+        const pluginElementId = actionItem === null || actionItem === void 0 ? void 0 : (_actionItem$config = actionItem.config) === null || _actionItem$config === void 0 ? void 0 : (_actionItem$config$ta = _actionItem$config.target) === null || _actionItem$config$ta === void 0 ? void 0 : _actionItem$config$ta.pluginElement;
+        return pluginElementId ? queryContainerElement(pluginElementId) : null;
+      };
+      exports.createPluginInstance = createPluginInstance;
+      var renderPlugin = (containerElement, refState, actionItem) => {
+        const instance = getFrontendModule().getInstance(containerElement);
+        const objectId = actionItem.config.target.objectId;
+        if (!instance || !objectId) {
+          return;
+        }
+        const obj = instance.spline.findObjectById(objectId);
+        if (!obj) {
+          return;
+        }
+        const {
+          PLUGIN_SPLINE: props
+        } = refState;
+        if (props.positionX != null) {
+          obj.position.x = props.positionX;
+        }
+        if (props.positionY != null) {
+          obj.position.y = props.positionY;
+        }
+        if (props.positionZ != null) {
+          obj.position.z = props.positionZ;
+        }
+        if (props.rotationX != null) {
+          obj.rotation.x = props.rotationX;
+        }
+        if (props.rotationY != null) {
+          obj.rotation.y = props.rotationY;
+        }
+        if (props.rotationZ != null) {
+          obj.rotation.z = props.rotationZ;
+        }
+        if (props.scaleX != null) {
+          obj.scale.x = props.scaleX;
+        }
+        if (props.scaleY != null) {
+          obj.scale.y = props.scaleY;
+        }
+        if (props.scaleZ != null) {
+          obj.scale.z = props.scaleZ;
+        }
+      };
+      exports.renderPlugin = renderPlugin;
+      var clearPlugin = () => {
+        return null;
+      };
+      exports.clearPlugin = clearPlugin;
+    }
+  });
+
+  // packages/systems/ix2/plugins/index.js
+  var require_plugins = __commonJS({
+    "packages/systems/ix2/plugins/index.js"(exports) {
+      "use strict";
+      var _interopRequireWildcard = require_interopRequireWildcard().default;
+      var _interopRequireDefault = require_interopRequireDefault().default;
+      Object.defineProperty(exports, "__esModule", {
+        value: true
+      });
+      exports.pluginMethodMap = void 0;
+      var _extends2 = _interopRequireDefault(require_extends());
+      var _constants = require_constants();
+      var lottie = _interopRequireWildcard(require_IX2Lottie());
+      var spline = _interopRequireWildcard(require_IX2Spline());
+      var pluginMethodMap = /* @__PURE__ */ new Map([[_constants.ActionTypeConsts.PLUGIN_LOTTIE, (0, _extends2.default)({}, lottie)], [_constants.ActionTypeConsts.PLUGIN_SPLINE, (0, _extends2.default)({}, spline)]]);
+      exports.pluginMethodMap = pluginMethodMap;
+    }
+  });
+
   // packages/systems/ix2/shared/logic/IX2VanillaPlugins.js
   var require_IX2VanillaPlugins = __commonJS({
     "packages/systems/ix2/shared/logic/IX2VanillaPlugins.js"(exports) {
@@ -6986,28 +7109,16 @@
       exports.getPluginOrigin = exports.getPluginDuration = exports.getPluginDestination = exports.getPluginConfig = exports.createPluginInstance = exports.clearPlugin = void 0;
       exports.isPluginType = isPluginType;
       exports.renderPlugin = void 0;
-      var _IX2LottieUtils = require_IX2LottieUtils();
-      var _constants = require_constants();
       var _IX2BrowserSupport = require_IX2BrowserSupport();
-      var pluginMethodMap = {
-        [_constants.ActionTypeConsts.PLUGIN_LOTTIE]: {
-          getConfig: _IX2LottieUtils.getPluginConfig,
-          getOrigin: _IX2LottieUtils.getPluginOrigin,
-          getDuration: _IX2LottieUtils.getPluginDuration,
-          getDestination: _IX2LottieUtils.getPluginDestination,
-          createInstance: _IX2LottieUtils.createPluginInstance,
-          render: _IX2LottieUtils.renderPlugin,
-          clear: _IX2LottieUtils.clearPlugin
-        }
-      };
+      var _plugins = require_plugins();
       function isPluginType(actionTypeId) {
-        return actionTypeId === _constants.ActionTypeConsts.PLUGIN_LOTTIE;
+        return _plugins.pluginMethodMap.has(actionTypeId);
       }
       var pluginMethod = (methodName) => (actionTypeId) => {
         if (!_IX2BrowserSupport.IS_BROWSER_ENV) {
           return () => null;
         }
-        const plugin = pluginMethodMap[actionTypeId];
+        const plugin = _plugins.pluginMethodMap.get(actionTypeId);
         if (!plugin) {
           throw new Error(`IX2 no plugin configured for: ${actionTypeId}`);
         }
@@ -7017,19 +7128,19 @@
         }
         return method;
       };
-      var getPluginConfig = pluginMethod("getConfig");
+      var getPluginConfig = pluginMethod("getPluginConfig");
       exports.getPluginConfig = getPluginConfig;
-      var getPluginOrigin = pluginMethod("getOrigin");
+      var getPluginOrigin = pluginMethod("getPluginOrigin");
       exports.getPluginOrigin = getPluginOrigin;
-      var getPluginDuration = pluginMethod("getDuration");
+      var getPluginDuration = pluginMethod("getPluginDuration");
       exports.getPluginDuration = getPluginDuration;
-      var getPluginDestination = pluginMethod("getDestination");
+      var getPluginDestination = pluginMethod("getPluginDestination");
       exports.getPluginDestination = getPluginDestination;
-      var createPluginInstance = pluginMethod("createInstance");
+      var createPluginInstance = pluginMethod("createPluginInstance");
       exports.createPluginInstance = createPluginInstance;
-      var renderPlugin = pluginMethod("render");
+      var renderPlugin = pluginMethod("renderPlugin");
       exports.renderPlugin = renderPlugin;
-      var clearPlugin = pluginMethod("clear");
+      var clearPlugin = pluginMethod("clearPlugin");
       exports.clearPlugin = clearPlugin;
     }
   });
@@ -7248,6 +7359,7 @@
       });
       exports.cleanupHTMLElement = cleanupHTMLElement;
       exports.clearAllStyles = clearAllStyles;
+      exports.clearObjectCache = clearObjectCache;
       exports.getActionListProgress = getActionListProgress;
       exports.getAffectedElements = getAffectedElements;
       exports.getComputedStyle = getComputedStyle;
@@ -7329,9 +7441,9 @@
         STYLE_BACKGROUND_COLOR,
         STYLE_BORDER,
         STYLE_TEXT_COLOR,
-        GENERAL_DISPLAY
+        GENERAL_DISPLAY,
+        OBJECT_VALUE
       } = _constants.ActionTypeConsts;
-      var OBJECT_VALUE = "OBJECT_VALUE";
       var trim = (v) => v.trim();
       var colorStyleProps = Object.freeze({
         [STYLE_BACKGROUND_COLOR]: BACKGROUND_COLOR,
@@ -7348,7 +7460,10 @@
         [HEIGHT]: HEIGHT,
         [FONT_VARIATION_SETTINGS]: FONT_VARIATION_SETTINGS
       });
-      var objectCache = {};
+      var objectCache = /* @__PURE__ */ new Map();
+      function clearObjectCache() {
+        objectCache.clear();
+      }
       var instanceCount = 1;
       function getInstanceId() {
         return "i" + instanceCount++;
@@ -7503,7 +7618,7 @@
           useEventTarget
         } = normalizeTarget(target);
         if (objectId) {
-          const ref = objectCache[objectId] || (objectCache[objectId] = {});
+          const ref = objectCache.has(objectId) ? objectCache.get(objectId) : objectCache.set(objectId, {}).get(objectId);
           return [ref];
         }
         if (appliesTo === _constants.EventAppliesTo.PAGE) {
@@ -7604,7 +7719,7 @@
           actionTypeId
         } = actionItem;
         if ((0, _IX2VanillaPlugins.isPluginType)(actionTypeId)) {
-          return (0, _IX2VanillaPlugins.getPluginOrigin)(actionTypeId)(refState[actionTypeId]);
+          return (0, _IX2VanillaPlugins.getPluginOrigin)(actionTypeId)(refState[actionTypeId], actionItem);
         }
         switch (actionItem.actionTypeId) {
           case TRANSFORM_MOVE:
@@ -8361,6 +8476,9 @@
       function stringifyTarget(target) {
         if (typeof target === "string") {
           return target;
+        }
+        if (target.pluginElement && target.objectId) {
+          return target.pluginElement + BAR_DELIMITER + target.objectId;
         }
         const {
           id = "",
@@ -10966,6 +11084,7 @@
         getNamespacedParameterId,
         shouldAllowMediaQuery,
         cleanupHTMLElement,
+        clearObjectCache,
         stringifyTarget,
         mediaQueriesEqual,
         shallowEqual
@@ -11199,6 +11318,7 @@
             eventListeners
           } = ixSession;
           eventListeners.forEach(clearEventListener);
+          clearObjectCache();
           store.dispatch((0, _IX2EngineActions.sessionStopped)());
         }
       }
@@ -11959,11 +12079,8 @@
               refState
             } = ixElements[elementId] || {};
             const actionState = refState && refState[actionTypeId];
-            switch (refType) {
-              case HTML_ELEMENT: {
-                renderHTMLElement(ref, refState, actionState, eventId, actionItem, styleProp, elementApi, renderType, pluginInstance);
-                break;
-              }
+            if (refType === HTML_ELEMENT || isPluginType(actionTypeId)) {
+              renderHTMLElement(ref, refState, actionState, eventId, actionItem, styleProp, elementApi, renderType, pluginInstance);
             }
           }
           if (complete) {
@@ -13495,50 +13612,7 @@
   require_webflow_navbar();
   require_webflow_maps();
 })();
-/*!
- * tram.js v0.8.2-global
- * Cross-browser CSS3 transitions in JavaScript
- * https://github.com/bkwld/tram
- * MIT License
- */
-/*!
- * Webflow._ (aka) Underscore.js 1.6.0 (custom build)
- * _.each
- * _.map
- * _.find
- * _.filter
- * _.any
- * _.contains
- * _.delay
- * _.defer
- * _.throttle (webflow)
- * _.debounce
- * _.keys
- * _.has
- * _.now
- * _.template (webflow: upgraded to 1.13.6)
- *
- * http://underscorejs.org
- * (c) 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
- * Underscore may be freely distributed under the MIT license.
- * @license MIT
- */
-/*! Bundled license information:
 
-timm/lib/timm.js:
-  (*!
-   * Timm
-   *
-   * Immutability helpers with fast reads and acceptable writes.
-   *
-   * @copyright Guillermo Grau Panea 2016
-   * @license MIT
-   *)
-*/
-/**
- * ----------------------------------------------------------------------
- * Webflow: Interactions 2.0: Init
- */
 Webflow.require('ix2').init(
 {"events":{"e":{"id":"e","animationType":"preset","eventTypeId":"SCROLL_INTO_VIEW","action":{"id":"","actionTypeId":"SLIDE_EFFECT","instant":false,"config":{"actionListId":"slideInBottom","autoStopEventId":"e-2"}},"mediaQueries":["main","medium","small","tiny"],"target":{"id":"64ae50b496be9167021a769c|e464d218-f801-55d1-1f50-7da00b5bfb8f","appliesTo":"ELEMENT","styleBlockIds":[]},"targets":[{"id":"64ae50b496be9167021a769c|e464d218-f801-55d1-1f50-7da00b5bfb8f","appliesTo":"ELEMENT","styleBlockIds":[]}],"config":{"loop":false,"playInReverse":false,"scrollOffsetValue":20,"scrollOffsetUnit":"%","delay":0,"direction":"BOTTOM","effectIn":true},"createdOn":1582925126668},"e-3":{"id":"e-3","animationType":"preset","eventTypeId":"SCROLL_INTO_VIEW","action":{"id":"","actionTypeId":"SLIDE_EFFECT","instant":false,"config":{"actionListId":"slideInBottom","autoStopEventId":"e-4"}},"mediaQueries":["main","medium","small","tiny"],"target":{"id":"64ae50b496be9167021a769c|270e8437-efa3-df11-d438-de69b23e41e9","appliesTo":"ELEMENT","styleBlockIds":[]},"targets":[{"id":"64ae50b496be9167021a769c|270e8437-efa3-df11-d438-de69b23e41e9","appliesTo":"ELEMENT","styleBlockIds":[]}],"config":{"loop":false,"playInReverse":false,"scrollOffsetValue":20,"scrollOffsetUnit":"%","delay":0,"direction":"BOTTOM","effectIn":true},"createdOn":1582925147477},"e-5":{"id":"e-5","animationType":"preset","eventTypeId":"SCROLL_INTO_VIEW","action":{"id":"","actionTypeId":"SLIDE_EFFECT","instant":false,"config":{"actionListId":"slideInBottom","autoStopEventId":"e-6"}},"mediaQueries":["main","medium","small","tiny"],"target":{"id":"64ae50b496be9167021a769c|29c25774-570b-ddb2-69b5-f4ddbb194afd","appliesTo":"ELEMENT","styleBlockIds":[]},"targets":[{"id":"64ae50b496be9167021a769c|29c25774-570b-ddb2-69b5-f4ddbb194afd","appliesTo":"ELEMENT","styleBlockIds":[]}],"config":{"loop":false,"playInReverse":false,"scrollOffsetValue":20,"scrollOffsetUnit":"%","delay":100,"direction":"BOTTOM","effectIn":true},"createdOn":1582925159926},"e-15":{"id":"e-15","name":"","animationType":"preset","eventTypeId":"SCROLL_INTO_VIEW","action":{"id":"","actionTypeId":"SLIDE_EFFECT","instant":false,"config":{"actionListId":"slideInBottom","autoStopEventId":"e-16"}},"mediaQueries":["main","medium","small","tiny"],"target":{"id":"64ae50b496be9167021a769c|bf01fc67-b400-7bf5-0471-8c021cd10481","appliesTo":"ELEMENT","styleBlockIds":[]},"targets":[],"config":{"loop":false,"playInReverse":false,"scrollOffsetValue":20,"scrollOffsetUnit":"%","delay":100,"direction":"BOTTOM","effectIn":true},"createdOn":1689195637603},"e-17":{"id":"e-17","name":"","animationType":"preset","eventTypeId":"SCROLL_INTO_VIEW","action":{"id":"","actionTypeId":"SLIDE_EFFECT","instant":false,"config":{"actionListId":"slideInBottom","autoStopEventId":"e-18"}},"mediaQueries":["main","medium","small","tiny"],"target":{"id":"64ae50b496be9167021a769c|560fd9ac-2ee6-fce5-8204-a79ae123133e","appliesTo":"ELEMENT","styleBlockIds":[]},"targets":[],"config":{"loop":false,"playInReverse":false,"scrollOffsetValue":20,"scrollOffsetUnit":"%","delay":0,"direction":"BOTTOM","effectIn":true},"createdOn":1689195648789}},"actionLists":{"slideInBottom":{"id":"slideInBottom","useFirstGroupAsInitialState":true,"actionItemGroups":[{"actionItems":[{"actionTypeId":"STYLE_OPACITY","config":{"delay":0,"duration":0,"target":{"id":"N/A","appliesTo":"TRIGGER_ELEMENT","useEventTarget":true},"value":0}}]},{"actionItems":[{"actionTypeId":"TRANSFORM_MOVE","config":{"delay":0,"duration":0,"target":{"id":"N/A","appliesTo":"TRIGGER_ELEMENT","useEventTarget":true},"xValue":0,"yValue":100,"xUnit":"PX","yUnit":"PX","zUnit":"PX"}}]},{"actionItems":[{"actionTypeId":"TRANSFORM_MOVE","config":{"delay":0,"easing":"outQuart","duration":1000,"target":{"id":"N/A","appliesTo":"TRIGGER_ELEMENT","useEventTarget":true},"xValue":0,"yValue":0,"xUnit":"PX","yUnit":"PX","zUnit":"PX"}},{"actionTypeId":"STYLE_OPACITY","config":{"delay":0,"easing":"outQuart","duration":1000,"target":{"id":"N/A","appliesTo":"TRIGGER_ELEMENT","useEventTarget":true},"value":1}}]}]}},"site":{"mediaQueries":[{"key":"main","min":992,"max":10000},{"key":"medium","min":768,"max":991},{"key":"small","min":480,"max":767},{"key":"tiny","min":0,"max":479}]}}
 );
